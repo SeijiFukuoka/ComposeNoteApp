@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -22,13 +24,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.noteapp.model.Note
 import br.com.noteapp.screen.NoteViewModel
 import br.com.noteapp.screen.NotesScreen
 import br.com.noteapp.ui.theme.NoteAppTheme
+import br.com.noteapp.util.formatDate
+import dagger.hilt.android.AndroidEntryPoint
 
 @ExperimentalComposeUiApi
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,7 +44,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    NotesApp()
+                    val noteViewModel: NoteViewModel by viewModels()
+                    NotesApp(noteViewModel)
                 }
             }
         }
@@ -50,8 +55,9 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun NotesApp(notesViewModel: NoteViewModel = viewModel()) {
-    val notesList = notesViewModel.getAllNotes()
+fun NotesApp(notesViewModel: NoteViewModel) {
+    val notesList = notesViewModel.noteList.collectAsState().value
+
     NotesScreen(
         notes = notesList,
         onAddNote = { note -> notesViewModel.addNote(note) },
@@ -82,7 +88,7 @@ fun NoteRow(
             Text(text = note.title, style = MaterialTheme.typography.subtitle2)
             Text(text = note.description, style = MaterialTheme.typography.subtitle1)
             Text(
-                text = note.entryDate.toString(),
+                text = formatDate(note.entryDate.time),
                 style = MaterialTheme.typography.caption
             )
         }
